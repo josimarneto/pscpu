@@ -1,0 +1,99 @@
+#!/usr/bin/env python3
+
+import os
+import sys
+
+def extract_pid(line):
+	k = line.find(' ')
+	if(k > -1):
+		L = line[k + 1 :]
+		k = L.find(' ')
+		while k == 0:
+			L = L[k + 1 :]
+			k = L.find(' ')
+		pid = L
+	else:
+		pid = ''
+	k = pid.find(' ')
+	if(k > -1):
+		pid = pid[0 : k]
+	return pid
+
+def extract_cpu_load(line):
+	k = line.find(' ')
+	if(k > -1):
+		L = line[k + 1 :]
+		k = L.find(' ')
+		while k == 0:
+			L = L[k + 1 :]
+			k = L.find(' ')
+		k = L.find(' ')
+		if(k > -1):
+			L = L[k + 1 :]
+			k = L.find(' ')
+			while k == 0:
+				L = L[k + 1 :]
+				k = L.find(' ')
+			cpuload = L
+		else:
+			cpuload = ''
+	else:
+		cpuload = ''
+	k = cpuload.find(' ')
+	if(k > -1):
+		cpuload = cpuload[0 : k]
+	return cpuload
+
+def extract_name(line):
+	k = line.find(':')
+	if(k > -1):
+		L = line[k + 1 :]
+		k = L.find(' ')
+		while k == 0:
+			L = L[k + 1 :]
+			k = L.find(' ')
+		k = L.find(' ')
+		if(k > -1):
+			L = L[k + 1 :]
+			k = L.find(' ')
+			while k == 0:
+				L = L[k + 1 :]
+				k = L.find(' ')
+			name = L
+		else:
+			name = ''
+	else:
+		name = ''
+	k = name.find(' ')
+	if(k > -1):
+		name = name[k + 1 : ]
+	return name
+
+if len(sys.argv) != 2:
+	print('Usage:')
+	print('pscpu cpu_usage_to_search')
+else:
+	cpu_threshold = float(sys.argv[1])
+	pipe_id = os.popen('ps -aux')
+	line = pipe_id.readline()
+	finished = 0
+	empty_lines = 0
+	while (finished == 0):
+		if len(line) > 2:
+			cpuload = extract_cpu_load(line)
+			empty_lines = 0
+			try:
+				c = float(cpuload)
+				if c >= cpu_threshold:
+					pid = extract_pid(line)
+					name = extract_name(line)
+					print(pid + ' ' + cpuload + \
+					'             ' + name)
+			except:
+				print('')
+		else:
+			empty_lines += 1
+			if(empty_lines == 10):
+				finished = 1
+		line = pipe_id.readline()
+	pipe_id.close()
